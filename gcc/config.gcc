@@ -2878,11 +2878,13 @@ powerpc-*-darwin*)
 	    ;;
 	esac
 	tmake_file="${tmake_file} t-slibgcc"
+	extra_headers="${extra_headers} ppc_intrinsics.h"
 	;;
 powerpc64-*-darwin*)
 	extra_options="${extra_options} ${cpu_type}/darwin.opt"
 	tmake_file="${tmake_file} ${cpu_type}/t-darwin64-biarch t-slibgcc"
 	tm_file="${tm_file} ${cpu_type}/darwin64-biarch.h"
+	extra_headers="${extra_headers} ppc_intrinsics.h"
 	;;
 powerpc*-*-freebsd*)
 	tm_file="${tm_file} elfos.h gnu-user.h ${fbsd_tm_file} rs6000/sysv4.h"
