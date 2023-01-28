@@ -1,0 +1,11 @@
+'comment' { dg-do run } ;
+'begin'
+	'integer' i;
+	i := 0;
+
+L1:
+	i := i + 1;
+	'if' i < 4 'then' 'goto' L1;
+
+	exit ('if' i = 4 'then' 0 'else' 1);
+'end';

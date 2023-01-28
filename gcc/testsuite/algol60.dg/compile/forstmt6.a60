@@ -1,0 +1,17 @@
+'comment' { dg-do run {xfail *-*-*} } ;
+'comment' expected to fail due to unimplemented `own' handling ;
+'begin'
+  'integer' a, i;
+  'boolean' b;
+  a := 1;
+  b := 'false';
+
+  'for' i := 1, 2, 3, 4 'do' 'begin'
+    'own' 'integer' q;
+    'if' !b 'then' 'begin' b := 'true'; q := 0; 'end';
+    q := q + i;
+    'if' q >= 6 'then' a := q;
+  'end';
+
+  exit (a);
+'end';

@@ -1,0 +1,5 @@
+'comment' { dg-do compile } ;
+'begin'
+	label1:
+	'begin' label1: 'end'; 'comment' { dg-error "duplicate" } ;
+'end';

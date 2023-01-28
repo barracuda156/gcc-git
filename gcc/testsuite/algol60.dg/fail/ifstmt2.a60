@@ -1,0 +1,7 @@
+'comment' { dg-do compile } ;
+'begin'
+  'integer' a;
+  'Boolean' b, c;
+  'if' b 'then' 'if' b 'then'  'comment' { dg-error "unexpected" } ;
+    a := 4;
+'end';

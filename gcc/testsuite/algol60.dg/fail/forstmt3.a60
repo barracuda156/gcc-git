@@ -1,0 +1,16 @@
+'comment' { dg-do compile } ;
+'begin'
+  'integer' i;
+'comment' { dg-error "type mismatch" } ;  'for' i := 4 'while' 4 'do'
+    ;
+'comment' { dg-error "type mismatch" } ;  'for' i := 'true' 'while' 'true' 'do'
+    ;
+'comment' { dg-error "type mismatch" } ;  'for' i := 'true' 'step' 4 'until' 7 'do'
+    ;
+'comment' { dg-error "type mismatch" } ;  'for' i := 1 'step' 'true' 'until' 7 'do'
+    ;
+'comment' { dg-error "type mismatch" } ;  'for' i := 1 'step' 4 'until' 'true' 'do'
+    ;
+'comment' { dg-error "type mismatch" } ;  'for' i := 'true' 'do'
+    ;
+'end';

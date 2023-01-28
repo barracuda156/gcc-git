@@ -1,0 +1,10 @@
+'comment' { dg-do compile } ;
+'begin'
+	'procedure' foo1;
+	'begin'
+		a := a + 1; 'comment' { dg-warning "implicit|mismatch" } ;
+	'end';
+
+	'boolean' a;
+	foo1; 'comment' { dg-error "" } ;
+'end';

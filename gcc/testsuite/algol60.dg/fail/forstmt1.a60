@@ -1,0 +1,6 @@
+'comment' { dg-do compile } ;
+'begin'
+  'integer' i;
+'comment' { dg-error "expected" } ;  'for' 4 := i 'do'
+    ;
+'end';

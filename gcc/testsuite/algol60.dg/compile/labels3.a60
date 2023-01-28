@@ -1,0 +1,12 @@
+'begin' 'comment' { dg-do compile } ;
+	'own' 'integer' l;
+q:   	'begin'
+		'own' 'integer' m, n, h, i, j, k;
+		j := 3 * 3 + 3;
+		k := j 'div' 2;
+r:		i := 7 + j;
+s:		h := 3 * i;
+		l := h;
+	'end';
+s:      exit (l);
+'end';

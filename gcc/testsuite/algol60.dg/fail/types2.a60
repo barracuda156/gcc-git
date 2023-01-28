@@ -1,0 +1,7 @@
+'comment' { dg-do compile } ;
+'begin'
+ 'integer' a;
+ 'real' b;
+ a := 4.5; 'comment' { dg-error "type mismatch" } ;
+ b := `ahoj'; 'comment' { dg-error "type mismatch" } ;
+'end';

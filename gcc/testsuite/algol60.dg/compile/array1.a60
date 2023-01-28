@@ -1,0 +1,6 @@
+'comment' { dg-do compile } ;
+'begin'
+ 'integer' 'array' a[1:5];
+ 'integer' 'array' b[1:5,2:10];
+ 'own' 'integer' 'array' c[2:6,3:9,4:10];
+'end';

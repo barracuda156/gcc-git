@@ -1,0 +1,32 @@
+'begin' 'comment' { dg-do run } ;
+	'integer' i, acc;
+	'integer' 'array' ks[1:6];
+	'integer' 'array' ls[1:6];
+
+	ls[1] := 1; ks[1] := 0;
+	ls[2] := 2; ks[2] := 9;
+	ls[3] := 2; ks[3] := 0;
+	ls[4] := 3; ks[4] := 1;
+	ls[5] := 3; ks[5] := 2;
+	ls[6] := 3; ks[6] := 3;
+
+	acc := 0;
+
+	'for' i := 1 'step' 1 'until' 6 'do'
+	'begin'
+		'switch' b := q, r, s;
+		'switch' a := q, 'if' k > 5 'then' r 'else' s, b[k];
+		'integer' k, l;
+
+		k := ks[i];
+		l := ls[i];
+		acc := acc * 10;
+		'goto' a[l];
+	q:   	acc := acc + 1; 'goto' out;
+	r:	acc := acc + 2; 'goto' out;
+	s:	acc := acc + 3; 'goto' out;
+	out:
+	'end';
+
+	exit ('if' acc = 123123 'then' 0 'else' 1);
+'end';

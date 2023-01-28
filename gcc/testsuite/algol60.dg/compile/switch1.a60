@@ -1,0 +1,16 @@
+'begin' 'comment' { dg-do compile } ;
+	'own' 'integer' l;
+	'switch' a := q, s, q;
+	'switch' b := a[1], a[2], r, r, 'if' l > 0 'then' a[1] 'else' r;
+
+q:   	'begin'
+		'own' 'integer' m, n, h, i, j, k;
+		j := 3 * 3 + 3;
+		k := j 'div' 2;
+r:		i := 7 + j;
+s:		h := 3 * i;
+		l := h;
+	'end';
+r:      puts (`dummy');
+s:      exit (l);
+'end';

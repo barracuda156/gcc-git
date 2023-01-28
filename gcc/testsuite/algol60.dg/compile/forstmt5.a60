@@ -1,0 +1,19 @@
+'comment' { dg-do run } ;
+'begin'
+  'integer' a, i;
+  a := 10;
+  'for' i := 3 'do' a := a - i;
+  'if' a != 7 'then' exit (1);
+
+  'comment' check that the order of expressions is honored ;
+  a := 2;
+  'for' i := 3, 5 'do' a := 2*a - i;
+  'if' a != -3 'then' exit (2);
+
+  'comment' check for list with several values ;
+  a := 0;
+  'for' i := 1, 2, 3, 4, 5 'do' a := a + i;
+  'if' a != 15 'then' exit (3);
+
+  exit (0);
+'end';

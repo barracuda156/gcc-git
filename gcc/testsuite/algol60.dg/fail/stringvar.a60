@@ -1,0 +1,4 @@
+'comment' { dg-do compile } ;
+'begin'
+ 'string' a; 'comment' { dg-error "string" } ;
+'end';

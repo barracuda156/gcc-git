@@ -1,0 +1,5 @@
+'comment' { dg-do compile } ;
+'begin'
+ 'integer' 'array' c[1.5:2]; 'comment' { dg-error "lower boundary" } ;
+ 'integer' 'array' d[1:2.5]; 'comment' { dg-error "upper boundary" } ;
+'end';

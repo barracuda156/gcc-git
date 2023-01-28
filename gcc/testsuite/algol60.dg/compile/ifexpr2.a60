@@ -1,0 +1,10 @@
+'comment' { dg-do run } ;
+'begin'
+  'integer' a, b, c, d, q;
+  q := 5;
+  a := 'if' (q >= 4) 'then' 2 * q 'else' 3 + q;
+  b := 'if' (q >= 4) 'then' (2 * q) 'else' (3 + q);
+  c := 2 * 2 + 3 * 3 + 4 * 4;
+  d := (((2 * 2) + (3 * 3)) + (4 * 4));
+  exit ('if' (a = b) 'and' (c = d) 'then' 0 'else' 1);
+'end';

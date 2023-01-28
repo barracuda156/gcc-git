@@ -2840,6 +2840,7 @@ target_libraries="target-libgcc \
 		target-libobjc \
 		target-libada \
 		target-libgm2 \
+		target-libga60 \
 		target-libgo \
 		target-libphobos \
 		target-zlib"

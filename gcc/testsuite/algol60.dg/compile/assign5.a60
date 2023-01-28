@@ -1,0 +1,11 @@
+'comment'
+	{ dg-do run }
+	{ dg-output "^test(\n|\r\n|\r)$" }
+;
+
+'begin'
+  'integer' x, y, z;
+  x := y := z := puts (`test');
+  exit (0);
+'end';
+

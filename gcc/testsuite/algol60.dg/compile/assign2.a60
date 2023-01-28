@@ -1,0 +1,10 @@
+'begin' 'comment' { dg-do run } ;
+ 'integer' a, b, c;
+
+ a := 0;
+ b := 0;
+ c := 0;
+ a := b := c := 2;
+
+ exit ('if' a = b 'and' b = c 'and' c = 2 'then' 0 'else' 1);
+'end';

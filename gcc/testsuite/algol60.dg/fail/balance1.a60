@@ -1,0 +1,7 @@
+'comment' { dg-do compile } ;
+'begin''begin'
+'begin''begin'
+'begin''begin'
+'end'; 'end';
+'end'; 'end';
+'end'; 'end'; 'end'; 'comment' { dg-error "syntax error" } ;

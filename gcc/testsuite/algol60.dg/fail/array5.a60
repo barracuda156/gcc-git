@@ -1,0 +1,5 @@
+'comment' { dg-do compile } ;
+'begin'
+ 'integer' a;
+ 'integer' 'array' b[1:a]; 'comment' { dg-error "unknown symbol" } ;
+'end';

@@ -1,0 +1,9 @@
+'comment' { dg-do compile } ;
+'begin'
+  'integer' a;
+  'Boolean' b;
+  'if' b 'then'
+    a := 4
+  'else'
+    a := 6;
+'end';

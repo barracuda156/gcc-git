@@ -1,0 +1,15 @@
+'comment'
+	{ dg-do run }
+	{ dg-output "^1 7 2 192 96 48 24 12 6 3 10 12 14 16 18 20 !(\n|\r\n|\r)$" }
+;
+
+'begin'
+	'integer' i;
+	'for' i := 1, 7, 2, 192, i 'div' 2 'while' i > 2, 10 'step' 2 'until' 20 'do'
+	'begin'
+		out (i);
+		out (` ');
+	'end';
+	puts (`!');
+	exit (0);
+'end';

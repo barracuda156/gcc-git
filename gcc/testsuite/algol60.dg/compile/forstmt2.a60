@@ -1,0 +1,6 @@
+'comment' { dg-do compile } ;
+'begin'
+  'integer' i;
+  'for' i := 1 'step' 2 'until' 10 'do'
+    ;
+'end';

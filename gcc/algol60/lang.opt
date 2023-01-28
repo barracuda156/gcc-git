@@ -1,0 +1,24 @@
+Language
+Algol60
+
+v
+Algol60
+Enable verbose output
+
+flexer-trace
+Algol60
+Trace lexical analysis
+
+fparser-trace
+Algol60
+Trace the parsing process
+
+fdump-ast
+Algol60
+Dump AST immediately after the parse
+
+fpreprocessed
+Algol60
+Treat the input file as preprocessed
+
+; This comment is to ensure we retain the blank line above.

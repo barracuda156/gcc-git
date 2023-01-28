@@ -1,0 +1,4 @@
+'comment' { dg-do compile } ;
+'begin'
+ 4 := 5; 'comment' { dg-error "unexpected" } ;
+'end';

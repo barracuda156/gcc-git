@@ -1,0 +1,5 @@
+'comment' { dg-do compile } ;
+'begin'
+ 'integer' a, b, c, d;
+ 'real' a; 'comment' { dg-error "duplicate identifier" } ;
+'end';

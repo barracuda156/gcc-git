@@ -1,0 +1,11 @@
+'begin' 'comment' { dg-do compile } ;
+	'integer' a;
+	'Boolean' b, c;
+	'own' 'real' g;
+	'own' 'integer' h, i, j, k, l;
+	'begin'
+		'own' 'integer' h, i, j, k, l;
+		;
+		;
+	'end';
+'end';

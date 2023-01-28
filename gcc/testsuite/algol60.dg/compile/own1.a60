@@ -1,0 +1,7 @@
+'comment' { dg-do run } ;
+'begin'
+	'own' 'integer' i;
+	i := (7 + 6) * 3;
+	i := 3 * i;
+        exit ('if' i = 117 'then' 0 'else' 1);
+'end';

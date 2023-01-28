@@ -1,0 +1,6 @@
+'comment' { dg-do compile } ;
+label1:
+'begin' 'comment' { dg-error "label" } ;
+	label3: ;
+	label4: label5:
+'end';

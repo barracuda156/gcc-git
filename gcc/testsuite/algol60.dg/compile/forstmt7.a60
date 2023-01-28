@@ -1,0 +1,9 @@
+'comment' { dg-do run } ;
+'begin'
+  'integer' i;
+  'integer' a;
+  a := 0;
+  'for' i := 0, i + 1 'while' i < 10 'do'
+    a := a + i;
+  exit ('if' a = 45 'then' 0 'else' 1);
+'end';

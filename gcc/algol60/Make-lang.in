@@ -1,0 +1,381 @@
+# Top level makefile fragment for Algol 60 For GCC. -*- makefile -*-
+
+# This file provides the language dependent support in the main Makefile.
+# Each language makefile fragment must provide the following targets:
+# foo.all.cross, foo.start.encap, foo.rest.encap,
+# foo.install-common, foo.install-man, foo.install-info, foo.dvi, foo.html,
+# foo.uninstall,
+# foo.mostlyclean, foo.clean, foo.distclean,
+# foo.maintainer-clean, foo.stage1, foo.stage2, foo.stage3, foo.stage4
+#
+# where `foo' is the name of the language.
+#
+# It should also provide rules for:
+#
+# - making any compiler driver (ga60)
+# - the compiler proper (algol601)
+# - define the names for selecting the language in LANGUAGES.
+
+GA60_INSTALL_NAME := $(shell echo ga60|sed '$(program_transform_name)')
+ALGOL60_TARGET_INSTALL_NAME := $(target_noncanonical)-$(shell echo ga60|sed '$(program_transform_name)')
+AL60L_DIR := /home/ant/stud/dp/gcc-algol/trunk/al60l
+
+ALGOL60_GENERATED =
+ALGOL60_EXES = ga60
+
+# for referring to all objects that make up AL60L parsing library
+AL60L_OBJS = algol60/lexer-tab.o algol60/parser-tab.o \
+		algol60/util.o algol60/slist.o algol60/cursor.o \
+		algol60/logger.o algol60/estring.o \
+		algol60/meta.o algol60/visitor-impl.o \
+		algol60/boundspair.o algol60/label.o \
+		algol60/symbol.o algol60/type.o \
+		algol60/for-elmt.o algol60/desig-expr.o \
+		algol60/statement.o algol60/expression.o \
+		algol60/a60_symtab.o
+
+.PHONY: algol60
+
+# Define the names for selecting Algol 60 in LANGUAGES.
+algol60: algol601$(exeext) ga60$(exeext)
+
+# core compiler
+algol601$(exeext): algol60/algol601.o algol60/lang.o algol60/algol-tree.o \
+		algol60/tree-convert.o algol60/al60l-bind.o\
+		$(BACKEND) $(LIBSDEPS) attribs.o $(AL60L_OBJS)
+	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ \
+		algol60/algol601.o algol60/lang.o algol60/algol-tree.o \
+		algol60/tree-convert.o algol60/al60l-bind.o\
+		$(BACKEND) $(LIBS) attribs.o $(AL60L_OBJS)
+
+# Create the compiler driver ga60
+ga60$(exeext): $(GCC_OBJS) version.o prefix.o intl.o $(EXTRA_GCC_OBJS) \
+		$(LIBDEPS) algol60/a60_spec.o
+	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ algol60/a60_spec.o \
+		$(GCC_OBJS) version.o prefix.o intl.o $(EXTRA_GCC_OBJS) $(LIBS)
+
+#
+
+ALGOL60_GTFILES =
+#gt-algol60-algol-tree.h
+
+# GCC side
+
+algol60/gcc-stuff: $(CONFIG_H) $(SYSTEM_H) $(RTL_H) $(TM_H) $(GGC_H) \
+		$(TREE_H) $(LANGHOOKS_DEF_H) $(TARGET_H)\
+		coretypes.h flags.h toplev.h diagnostic.h varray.h\
+		input.h options.h opts.h output.h langhooks.h\
+		algol60/algol-tree.h
+	touch algol60/gcc-stuff
+
+algol60/algol601.o: algol60/algol601.c algol60/gcc-stuff \
+		$(ALGOL60_GTFILES) gtype-algol60.h
+
+algol60/lang.o: algol60/lang.c algol60/lexer.h algol60/parser.h\
+		algol60/statement.h algol60/slist.h\
+		algol60/gcc-stuff \
+		$(ALGOL60_GTFILES) gtype-algol60.h
+
+algol60/algol-tree.o: algol60/algol-tree.c algol60/gcc-stuff \
+		$(ALGOL60_GTFILES) gtype-algol60.h
+
+algol60/tree-convert.o: algol60/tree-convert.c algol60/gcc-stuff \
+		$(ALGOL60_GTFILES) gtype-algol60.h
+
+algol60/a60_spec.o: algol60/a60_spec.c $(CONFIG_H) $(SYSTEM_H) \
+		coretypes.h diagnostic.h $(TREE_H) flags.h toplev.h langhooks.h $(TM_H) \
+		$(ALGOL60_GTFILES) gtype-algol60.h
+
+algol60/al60l-bind.o: algol60/al60l-bind.c algol60/al60l-bind.h \
+		algol60/slist.h algol60/estring.h algol60/boundspair.h\
+		algol60/label.h algol60/symbol.h algol60/type.h algol60/statement.h\
+		algol60/expression.h algol60/for-elmt.h algol60/for-elmt.i\
+		algol60/cursor.h algol60/cursor.i\
+		algol60/statement.i algol60/expression.i algol60/desig-expr.i\
+		algol60/type.i algol60/symbol.i\
+		algol60/visitor.h\
+		algol60/util.h algol60/meta.h $(ALGOL60_GTFILES) gtype-algol60.h algol60/gcc-stuff
+
+# AL60L side
+
+algol60.srcextra: algol60/parse-tab.c algol60/parse-tab.h \
+		algol60/lexer-tab.c \
+		algol60/ast-tab.c algol60/ast-tab.h
+	-cp -p $^ $(srcdir)/algol60
+
+algol60/util.o: algol60/util.c algol60/util.h algol60/gcc-stuff
+
+algol60/slist.o: algol60/slist.c algol60/slist.h\
+		algol60/slist.i\
+		algol60/pd.h algol60/gcc-stuff
+
+algol60/cursor.o: algol60/cursor.c algol60/cursor.h algol60/pd.h algol60/util.h algol60/gcc-stuff
+
+algol60/logger.o: algol60/logger.c algol60/logger.h algol60/logger.i\
+		algol60/cursor.i\
+		algol60/cursor.h\
+		algol60/meta.h algol60/pd.h algol60/gcc-stuff
+
+algol60/estring.o: algol60/estring.c algol60/estring.h algol60/estring.i\
+		algol60/pd.h algol60/gcc-stuff
+
+algol60/meta.o: algol60/meta.c algol60/meta.h algol60/gcc-stuff
+
+algol60/visitor-impl.o: algol60/visitor-impl.c algol60/visitor-impl.h\
+		algol60/visitor.h\
+		algol60/meta.h algol60/pd.h algol60/gcc-stuff
+
+algol60/boundspair.o: algol60/boundspair.c algol60/boundspair.h algol60/boundspair.i\
+		algol60/expression.i\
+		algol60/expression.h\
+		algol60/meta.h algol60/pd.h algol60/gcc-stuff
+
+algol60/for-elmt.o: algol60/for-elmt.c algol60/for-elmt.h algol60/for-elmt.i\
+		algol60/expression.i algol60/cursor.i algol60/estring.i algol60/logger.i\
+		algol60/expression.h algol60/estring.h algol60/logger.h\
+		algol60/type.h\
+		algol60/visitor.i algol60/visitor.h algol60/visitor-impl.h\
+		algol60/meta.h algol60/pd.h algol60/gcc-stuff
+
+algol60/label.o: algol60/label.c algol60/label.h algol60/label.i\
+		algol60/boundspair.i algol60/estring.i\
+		algol60/boundspair.h algol60/estring.h\
+		algol60/visitor.i algol60/visitor.h algol60/visitor-impl.h\
+		algol60/meta.h algol60/pd.h algol60/gcc-stuff
+
+algol60/symbol.o: algol60/symbol.c algol60/symbol.h algol60/symbol.i\
+		algol60/label.i algol60/type.i algol60/statement.i algol60/estring.i\
+		algol60/cursor.i algol60/logger.i\
+		algol60/label.h algol60/type.h algol60/statement.h algol60/estring.h\
+		algol60/cursor.h algol60/logger.h\
+		algol60/visitor.i algol60/visitor.h algol60/visitor-impl.h\
+		algol60/meta.h algol60/pd.h algol60/gcc-stuff
+
+algol60/a60_symtab.o: algol60/a60_symtab.c algol60/a60_symtab.h algol60/a60_symtab.i\
+		algol60/symbol.i algol60/label.i algol60/type.i algol60/statement.i\
+		algol60/estring.i algol60/logger.i algol60/cursor.i algol60/visitor.i\
+		algol60/slist.i\
+		algol60/slist.h algol60/symbol.h algol60/label.h algol60/type.h\
+		algol60/logger.h algol60/estring.h algol60/cursor.h\
+		algol60/meta.h algol60/pd.h algol60/gcc-stuff
+
+algol60/type.o: algol60/type.c algol60/type.h algol60/type.i\
+		algol60/estring.i algol60/expression.i algol60/statement.i\
+		algol60/logger.i algol60/slist.i algol60/boundspair.i\
+		algol60/symbol.i\
+		algol60/estring.h algol60/expression.h algol60/statement.h\
+		algol60/logger.h algol60/slist.h algol60/boundspair.h\
+		algol60/symbol.h algol60/desig-expr.h\
+		algol60/visitor-impl.h algol60/visitor.h algol60/visitor.i\
+		algol60/meta.h algol60/pd.h algol60/gcc-stuff
+
+algol60/statement.o: algol60/statement.c algol60/statement.h algol60/statement.i\
+		algol60/cursor.i algol60/slist.i algol60/expression.i\
+		algol60/logger.i algol60/symbol.i algol60/label.i algol60/type.i\
+		algol60/estring.i algol60/a60_symtab.i\
+		algol60/cursor.h algol60/slist.h algol60/expression.h\
+		algol60/logger.h algol60/symbol.h algol60/label.h algol60/type.h\
+		algol60/estring.h algol60/boundspair.h algol60/for-elmt.h\
+		algol60/a60_symtab.h\
+		algol60/visitor-impl.h algol60/visitor.h algol60/visitor.i\
+		algol60/meta.h algol60/pd.h algol60/gcc-stuff
+
+algol60/expression.o: algol60/expression.c algol60/expression.h algol60/expression.i\
+		algol60/cursor.i algol60/estring.i algol60/logger.i\
+		algol60/statement.i algol60/label.i\
+		algol60/slist.i algol60/type.i algol60/symbol.i\
+		algol60/desig-expr.i\
+		algol60/cursor.h algol60/estring.h algol60/logger.h\
+		algol60/statement.h algol60/label.h\
+		algol60/slist.h algol60/type.h algol60/symbol.h\
+		algol60/desig-expr.h algol60/a60_symtab.h\
+		algol60/visitor-impl.h algol60/visitor.h algol60/visitor.i\
+		algol60/meta.h algol60/pd.h algol60/gcc-stuff
+
+algol60/desig-expr.o: algol60/desig-expr.c algol60/desig-expr.h algol60/desig-expr.i\
+		algol60/cursor.i algol60/label.i algol60/expression.i\
+		algol60/logger.i algol60/estring.i algol60/statement.i\
+		algol60/symbol.i\
+		algol60/expression.h algol60/logger.h algol60/estring.h\
+		algol60/statement.h algol60/symbol.h algol60/type.h\
+		algol60/a60_symtab.h\
+		algol60/visitor-impl.h algol60/visitor.h algol60/visitor.i\
+		algol60/meta.h algol60/pd.h algol60/gcc-stuff
+
+algol60/parser-tab.o: algol60/parser-tab.c algol60/gcc-stuff\
+		algol60/parser.h algol60/lexer.h algol60/logger.h\
+		algol60/pd.h algol60/cursor.h algol60/cursor.h\
+		algol60/statement.h algol60/label.h algol60/type.h\
+		algol60/symbol.h algol60/boundspair.h algol60/expression.h\
+		algol60/a60_symtab.h\
+		algol60/visitor.i algol60/visitor.h algol60/visitor-impl.h\
+		algol60/for-elmt.h algol60/desig-expr.h \
+		algol60/meta.h algol60/gcc-stuff
+
+algol60/parser-tab.c: algol60/parser.y algol60/gcc-stuff
+	$(BISON) -t -v -d $(BISONFLAGS) -o algol60/parser-tab.c $(srcdir)/algol60/parser.y
+
+algol60/parser-tab.h: algol60/parser-tab.c\
+		algol60/slist.i algol60/statement.i algol60/label.i\
+		algol60/symbol.i algol60/type.i algol60/boundspair.i\
+		algol60/expression.i algol60/estring.i
+	[ -f algol60/parser-tab.h ]
+
+algol60/lexer.h: algol60/parser-tab.h
+
+algol60/lexer-tab.o: algol60/lexer.h algol60/lexer-tab.c algol60/gcc-stuff
+
+algol60/lexer-tab.c: algol60/lexer.l algol60/lexer.h algol60/parser-tab.h \
+		algol60/estring.h algol60/logger.h algol60/pd.h algol60/cursor.h \
+		algol60/gcc-stuff
+	$(FLEX) -B $(FLEXFLAGS) -oalgol60/lexer-tab.c $(srcdir)/algol60/lexer.l
+
+
+
+
+# generated files are put into the source directory in case someone
+# wants to build but does not have lex/yacc
+
+# -- NEEDS TO BE COMPARED AGAINST THE REAL MAKEFILE FROM AL60L LIBRARY --
+#
+#algol60/lexer-tab.c: algol60/lexer.l
+#	-$(FLEX) $(FLEXFLAGS) -o$@ $<
+#
+#algol60/parser-tab.c algol60/parser-tab.h algol60/parser-tab.output: algol60/parser.y
+#	-$(BISON) $(BISONFLAGS) -v --defines --output=algol60/parser-tab.c $<
+
+#
+# Build hooks:
+
+algol60.all.cross:
+	_error_not_here_yet - havent even thought about it - it may even work
+
+algol60.start.encap:
+algol60.rest.encap:
+algol60.man:
+algol60.srcman:
+
+algol60.tags: force
+	cd $(srcdir)/algol60; etags -o TAGS.sub *.y *.l *.c *.h; \
+		etags --include TAGS.sub --include ../TAGS.sub
+
+
+# these are taken from Fortran frontend
+
+algol60.info: doc/algol60.info
+
+algol60.srcinfo: doc/algol60.info
+	-cp -p $^ $(srcdir)/algol60
+
+algol60.dvi: doc/algol60.dvi
+
+TEXI_ALGOL60_FILES = \
+  $(srcdir)/algol60/ga60.texi \
+  $(srcdir)/doc/include/fdl.texi \
+  $(srcdir)/doc/include/gpl.texi \
+  $(srcdir)/doc/include/funding.texi \
+  $(srcdir)/doc/include/gcc-common.texi \
+  gcc-vers.texi
+
+doc/algol60.info: $(TEXI_ALGOL60_FILES)
+	if [ x$(BUILD_INFO) = xinfo ]; then \
+	  rm -f doc/algol60.info-*; \
+	  $(MAKEINFO) -I $(srcdir)/doc/include -I $(srcdir)/algol60 \
+	    -o $@ $<; \
+	else true; fi
+
+doc/algol60.dvi: $(TEXI_ALGOL60_FILES)
+	$(TEXI2DVI) -I $(srcdir)/algol60 -I $(abs_docdir)/include -o $@ $<
+
+doc/algol60.pdf: $(TEXI_ALGOL60_FILES)
+	$(TEXI2PDF) -I $(srcdir)/algol60 -I $(abs_docdir)/include -o $@ $<
+
+$(build_htmldir)/algol60/index.html: $(TEXI_ALGOL60_FILES)
+	$(mkinstalldirs) $(@D)
+	rm -f $(@D)/*
+	$(TEXI2HTML) -I $(gcc_docdir)/include -I $(srcdir)/algol60 -o $(@D) $<
+
+#
+# Install hooks:
+
+# Install
+.phony:algol60.install.common
+.phony:algol60.install
+
+algol60.install-common: installdirs
+	-if [ -f algol601$(exeext) ] ; then \
+	  rm -f $(DESTDIR)$(bindir)/$(GA60_INSTALL_NAME)$(exeext); \
+	  $(INSTALL_PROGRAM) ga60$(exeext) $(DESTDIR)$(bindir)/$(GA60_INSTALL_NAME)$(exeext); \
+	  chmod a+x $(DESTDIR)$(bindir)/$(GA60_INSTALL_NAME)$(exeext); \
+	  if [ -f ga60-cross$(exeext) ] ; then \
+	    if [ -d $(DESTDIR)$(gcc_tooldir)/bin/. ] ; then \
+	      rm -f $(DESTDIR)$(gcc_tooldir)/bin/ga60$(exeext); \
+	      $(INSTALL_PROGRAM) ga60-cross$(exeext) $(DESTDIR)$(gcc_tooldir)/bin/ga60$(exeext); \
+	    else true; fi; \
+	  else \
+	    rm -f $(DESTDIR)$(bindir)/$(GA60_TARGET_INSTALL_NAME)$(exeext); \
+	    $(LN) $(DESTDIR)$(bindir)/$(GA60_INSTALL_NAME)$(exeext) $(DESTDIR)$(bindir)/$(GA60_TARGET_INSTALL_NAME)$(exeext); \
+	  fi ; \
+	fi
+
+algol60.install-info: $(DESTDIR)$(infodir)/algol60.info
+
+algol60.install-man:
+#$(DESTDIR)$(man1dir)/$(GA60_INSTALL_NAME)$(man1ext)
+
+algol60.uninstall:
+	if $(SHELL) -c 'install-info --version | sed 1q | fgrep -s -v -i debian' >/dev/null 2>&1; then \
+	  echo " install-info --delete --info-dir=$(DESTDIR)$(infodir) $(DESTDIR)$(infodir)/algol60.info"; \
+	  install-info --delete --info-dir=$(DESTDIR)$(infodir) $(DESTDIR)$(infodir)/algol60.info || : ; \
+	else : ; fi; \
+	rm -rf $(DESTDIR)$(bindir)/$(GA60_INSTALL_NAME)$(exeext); \
+	rm -rf $(DESTDIR)$(man1dir)/$(GA60_INSTALL_NAME)$(man1ext); \
+	rm -rf $(DESTDIR)$(bindir)/$(GA60_TARGET_INSTALL_NAME)$(exeext); \
+	rm -rf $(DESTDIR)$(infodir)/algol60.info*
+
+
+#
+# Clean hooks:
+# A lot of the ancillary files are deleted by the main makefile.
+# We just have to delete files specific to us.
+
+algol60.mostlyclean:
+	-rm -f algol601$(exeext)
+	-rm -f algol60/*.o
+
+algol60.clean: algol60.mostlyclean
+
+algol60.distclean: algol60.clean
+	-rm -f algol60/config.status
+
+algol60.maintainer-clean: algol60.distclean
+	-rm -f algol60/parser-tab.output algol60/parser-tab.c algol60/parser-tab.h
+	-rm -f algol60/lexer-tab.c
+	-rm -R $(srcdir)/algol60/*~
+
+#
+# Stage hooks:
+# The main makefile has already created stage?/algol60.
+
+algol60.stage1: stage1-start
+	-mv algol60/*$(objext) stage1/algol60
+algol60.stage2: stage2-start
+	-mv algol60/*$(objext) stage2/algol60
+algol60.stage3: stage3-start
+	-mv algol60/*$(objext) stage3/algol60
+algol60.stage4: stage4-start
+	-mv algol60/*$(objext) stage4/algol60
+algol60.stageprofile: stageprofile-start
+	-mv algol60/*$(objext) stageprofile/algol60
+algol60.stagefeedback: stagefeedback-start
+	-mv algol60/*$(objext) stagefeedback/algol60
+
+#
+# Maintenance hooks:
+
+# List of targets that can use the generic check- rule and its // variant.
+lang_checks += check-algol60
+
+#
+
+config.status: algol60/config-lang.in

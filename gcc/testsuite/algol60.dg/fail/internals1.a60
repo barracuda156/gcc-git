@@ -1,0 +1,5 @@
+'comment' { dg-do compile } ;
+'begin'
+ 'boolean' c;
+ c := abs ('true'); 'comment' { dg-error "type mismatch" } ;
+'end';

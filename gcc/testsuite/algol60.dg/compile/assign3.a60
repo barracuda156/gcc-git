@@ -1,0 +1,18 @@
+'begin' 'comment' { dg-do run } ;
+ 'integer' 'array' a[1:5];
+ 'integer' b;
+ 'integer' result;
+ result := 0;
+
+ b := 1;
+ a[1] := 0;
+ a[b] := b := 2;
+ result := 'if' a[1] = 2 'then' 0 'else' 1;
+
+ b := 1;
+ a[1] := 0;
+ b := a[b] := 2;
+ result := result + ('if' a[1] = 2 'then' 0 'else' 2);
+
+ exit (result);
+'end';

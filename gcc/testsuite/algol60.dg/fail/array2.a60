@@ -1,0 +1,4 @@
+'comment' { dg-do compile } ;
+'begin'
+ 'integer' 'array' a[]; 'comment' { dg-error "syntax error" } ;
+'end';

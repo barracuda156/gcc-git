@@ -1,0 +1,2 @@
+'comment' { dg-do compile } ;
+'begin' label: 'end';

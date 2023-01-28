@@ -1,0 +1,160 @@
+# Copyright (C) 1992, 1993, 1994, 1996, 1997, 2000, 2001, 2002, 2004
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+
+# This file was written by Rob Savoye (rob@cygnus.com)
+# Currently maintained by James A. Morrison (ja2morri@uwaterloo.ca)
+
+# Having this file here magically tells dejagnu that the algol60
+# directory is worthy of testing
+
+# This file is loaded by the tool init file (eg: unix.exp).  It provides
+# default definitions for algol60_start, etc. and other supporting cast
+# members.
+
+# These globals are used by algol60_start if no compiler arguments are
+# provided.  They are also used by the various testsuites to define the
+# environment: where to find stdio.h, libc.a, etc.
+
+load_lib gcc-defs.exp
+load_lib target-libpath.exp
+
+#
+# ALGOL60_UNDER_TEST is the compiler under test.
+#
+
+proc algol60_link_flags { paths } {
+    global ld_library_path
+    global ALGOL60_UNDER_TEST
+    global shlib_ext
+
+    set gccpath ${paths}
+    set libio_dir ""
+    set flags ""
+    set ld_library_path "."
+    set shlib_ext [get_shlib_extension]
+    verbose "shared lib extension: $shlib_ext"
+
+    if { $gccpath != "" } {
+      if [file exists "${gccpath}/libga60/.libs/libga60.a"] {
+          append flags "-L${gccpath}/libga60/.libs "
+          append ld_library_path ":${gccpath}/libga60/.libs"
+      }
+      if [file exists "${gccpath}/libga60/.libs/libga60.${shlib_ext}"] {
+	  append flags "-L${gccpath}/libga60/.libs "
+	  append ld_library_path ":${gccpath}/libga60/.libs"
+      }
+      append ld_library_path \
+	[gcc-set-multilib-library-path $ALGOL60_UNDER_TEST]
+    }
+
+    set_ld_library_path_env_vars
+
+    return "$flags"
+}
+
+# algol60_init -- called at the start of each .exp script.
+#
+# There currently isn't much to do, but always using it allows us to
+# make some enhancements without having to go back and rewrite the scripts.
+#
+
+proc algol60_init { args } {
+    global base_dir
+    global tmpdir
+    global libdir
+    global gluefile wrap_flags
+    global algol60_initialized
+    global ALGOL60_UNDER_TEST
+    global TOOL_EXECUTABLE TOOL_OPTIONS
+    global ALWAYS_ALGOL60FLAGS
+    global TESTING_IN_BUILD_TREE
+
+    # We set LC_ALL and LANG to C so that we get the same error messages as expected.
+    setenv LC_ALL C
+    setenv LANG C
+
+    if ![info exists ALGOL60_UNDER_TEST] then {
+	if [info exists TOOL_EXECUTABLE] {
+	    set ALGOL60_UNDER_TEST $TOOL_EXECUTABLE
+	} else {
+	    if { [is_remote host] || ! [info exists TESTING_IN_BUILD_TREE] } {
+		set ALGOL60_UNDER_TEST [transform ga60]
+	    } else {
+		set ALGOL60_UNDER_TEST [findfile $base_dir/../../ga60 "$base_dir/../../ga60 -B$base_dir/../../" [findfile $base_dir/ga60 "$base_dir/ga60 -B$base_dir/" [transform ga60]]]
+	    }
+	}
+    }
+
+    if ![is_remote host] {
+	if { [which $ALGOL60_UNDER_TEST] == 0 } then {
+	    perror "ALGOL60_UNDER_TEST ($ALGOL60_UNDER_TEST) does not exist"
+	    exit 1
+	}
+    }
+    if ![info exists tmpdir] {
+	set tmpdir "/tmp"
+    }
+
+    if [info exists gluefile] {
+	unset gluefile
+    }
+
+    algol60_maybe_build_wrapper "${tmpdir}/algol60-testglue.o"
+
+    set ALWAYS_ALGOL60FLAGS ""
+
+    if ![is_remote host] {
+	if [info exists TOOL_OPTIONS] {
+	    lappend ALWAYS_ALGOL60FLAGS "ldflags=[algol60_link_flags [get_multilibs ${TOOL_OPTIONS}] ]"
+	} else {
+	    lappend ALWAYS_ALGOL60FLAGS "ldflags=[algol60_link_flags [get_multilibs] ]"
+	}
+    }
+
+    if [info exists TOOL_OPTIONS] {
+	lappend ALWAYS_ALGOL60FLAGS "additional_flags=$TOOL_OPTIONS"
+    }
+
+    verbose -log "ALWAYS_ALGOL60FLAGS set to $ALWAYS_ALGOL60FLAGS"
+}
+
+proc algol60_target_compile { source dest type options } {
+    global rootme
+    global tmpdir
+    global gluefile wrap_flags
+    global srcdir
+    global ALGOL60_UNDER_TEST
+    global TOOL_OPTIONS
+    global ld_library_path
+    global ALWAYS_ALGOL60FLAGS
+
+    if { [target_info needs_status_wrapper]!="" && [info exists gluefile] } {
+	lappend options "libs=${gluefile}"
+	lappend options "ldflags=$wrap_flags"
+    }
+
+    lappend options "compiler=$ALGOL60_UNDER_TEST"
+
+    set options [concat "$ALWAYS_ALGOL60FLAGS" $options]
+    set options [dg-additional-files-options $options $source]
+
+    # If we have built libga60 along with the compiler (which usually
+    # _is not_ the case on Mac OS X systems), point the test harness
+    # at it (and associated headers).
+
+    return [target_compile $source $dest $type $options]
+}

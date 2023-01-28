@@ -1,0 +1,334 @@
+'comment' { dg-do run } ;
+
+'begin'
+  'integer' ci, di, qi, errors;
+  'Boolean' cb, db, qb;
+  'real' cr, dr, qr;
+
+  errors := 0;
+  qi := 5;
+  qr := 5.0;
+  qb := 'true';
+
+'comment'
+  few wild tests
+;
+
+  ci := 'if' qb 'then' 2*qi      + 3 'div' 4    'else' 'if' qb 'then' qi+6**2**3             'else' qi+8-9-6+5;
+  di := 'if' qb 'then' ((2 * qi) + (3 'div' 4)) 'else' 'if' qb 'then' (qi + ((6 ** 2) ** 3)) 'else' ((((qi + 8) - 9) - 6) + 5);
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  cb := qi > qi && qi < qi         || qi >= qi && qi <= qi        || qi = qi && qi != qi;
+  db := ((((qi > qi) && (qi < qi)) || ((qi >= qi) && (qi <= qi))) || ((qi = qi) && (qi != qi)));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb := qb => qb => qi >= qi;
+  db := ((qb => qb) => (qi >= qi));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+'comment'
+  check precedence level by level
+;
+
+  ci :=  -qi ** -qi;
+  di := ((-qi) ** (-qi));
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  ci :=  --qi;
+  di := (-(-qi));
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  ci :=  --qi ** --qi;
+  di := ((-(-qi)) ** (-(-qi)));
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  ci :=   qi ** qi  *  qi ** qi  ;
+  di := ((qi ** qi) * (qi ** qi));
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  cr :=   qi ** qi  /  qi ** qi  ;
+  dr := ((qi ** qi) / (qi ** qi));
+  errors := errors + ('if' cr != dr 'then' 1 'else' 0);
+
+  ci :=   qi ** qi  'div'  qi ** qi  ;
+  di := ((qi ** qi) 'div' (qi ** qi));
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  ci :=    qi ** qi  ** qi  ** qi ;
+  di := (((qi ** qi) ** qi) ** qi);
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  ci :=   qi * qi  +  qi * qi  ;
+  di := ((qi * qi) + (qi * qi));
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  cr :=   qi / qi  +  qi / qi  ;
+  dr := ((qi / qi) + (qi / qi));
+  errors := errors + ('if' cr != dr 'then' 1 'else' 0);
+
+  ci :=   qi 'div' qi  +  qi 'div' qi  ;
+  di := ((qi 'div' qi) + (qi 'div' qi));
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  ci :=   qi * qi  -  qi * qi  ;
+  di := ((qi * qi) - (qi * qi));
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  cr :=   qi / qi  -  qi / qi  ;
+  dr := ((qi / qi) - (qi / qi));
+  errors := errors + ('if' cr != dr 'then' 1 'else' 0);
+
+  ci :=   qi 'div' qi  -  qi 'div' qi  ;
+  di := ((qi 'div' qi) - (qi 'div' qi));
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  ci :=    qi * qi  * qi  * qi ;
+  di := (((qi * qi) * qi) * qi);
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  cr :=    qr / qr / qr  / qr ;
+  dr := (((qr / qr) / qr) / qr);
+  errors := errors + ('if' cr != dr 'then' 1 'else' 0);
+
+  ci :=    qi 'div' qi  'div' qi  'div' qi ;
+  di := (((qi 'div' qi) 'div' qi) 'div' qi);
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  cr :=    qr * qr  / qr  / qr ;
+  dr := (((qr * qr) / qr) / qr);
+  errors := errors + ('if' cr != dr 'then' 1 'else' 0);
+
+  cr :=    qr / qr  * qr  / qr ;
+  dr := (((qr / qr) * qr) / qr);
+  errors := errors + ('if' cr != dr 'then' 1 'else' 0);
+
+  ci :=    qi * qi  'div' qi  'div' qi ;
+  di := (((qi * qi) 'div' qi) 'div' qi);
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  ci :=    qi 'div' qi  * qi  'div' qi ;
+  di := (((qi 'div' qi) * qi) 'div' qi);
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+
+  cb :=   qi + qi  <  qi + qi  ;
+  db := ((qi + qi) < (qi + qi));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qi + qi  <=  qi + qi  ;
+  db := ((qi + qi) <= (qi + qi));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qi + qi  =  qi + qi  ;
+  db := ((qi + qi) = (qi + qi));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qi + qi  >=  qi + qi  ;
+  db := ((qi + qi) >= (qi + qi));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qi + qi  >  qi + qi  ;
+  db := ((qi + qi) > (qi + qi));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qi + qi  !=  qi + qi  ;
+  db := ((qi + qi) != (qi + qi));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qi - qi  <  qi - qi  ;
+  db := ((qi - qi) < (qi - qi));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qi - qi  <=  qi - qi  ;
+  db := ((qi - qi) <= (qi - qi));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qi - qi  =  qi - qi  ;
+  db := ((qi - qi) = (qi - qi));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qi - qi  >=  qi - qi  ;
+  db := ((qi - qi) >= (qi - qi));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qi - qi  >  qi - qi  ;
+  db := ((qi - qi) > (qi - qi));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qi - qi  !=  qi - qi  ;
+  db := ((qi - qi) != (qi - qi));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  ci :=    qi + qi  + qi  + qi ;
+  di := (((qi + qi) + qi) + qi);
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  ci :=    qi - qi  - qi  - qi ;
+  di := (((qi - qi) - qi) - qi);
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  ci :=    qi + qi  - qi  - qi ;
+  di := (((qi + qi) - qi) - qi);
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  ci :=    qi - qi  + qi  - qi ;
+  di := (((qi - qi) + qi) - qi);
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+
+  cb :=  !qb && !qb;
+  db := ((!qb) && (!qb));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=  !!qb;
+  db := (!(!qb));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+
+  cb :=   qb && qb  ||  qb && qb  ;
+  db := ((qb && qb) || (qb && qb));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=    qb && qb  && qb  && qb ;
+  db := (((qb && qb) && qb) && qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+
+  cb :=   qb || qb  =>  qb || qb  ;
+  db := ((qb || qb) => (qb || qb));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=    qb || qb  || qb  || qb ;
+  db := (((qb || qb) || qb) || qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+
+  cb :=   qb => qb  ==  qb => qb  ;
+  db := ((qb => qb) == (qb => qb));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=    qb => qb  => qb  => qb ;
+  db := (((qb => qb) => qb) => qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+
+  cb :=    qb == qb  == qb  == qb ;
+  db := (((qb == qb) == qb) == qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+
+'comment'
+  parentheses tests
+;
+
+  ci :=  -(qi ** -qi);
+  di := (-(qi ** (-qi)));
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+
+  ci :=   qi ** (qi * qi) ** qi  ;
+  di := ((qi ** (qi * qi)) ** qi);
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+
+  ci :=   qi * (qi + qi) * qi  ;
+  di := ((qi * (qi + qi)) * qi);
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  cr :=   qr / (qr + qr) / qr  ;
+  dr := ((qr / (qr + qr)) / qr);
+  errors := errors + ('if' cr != dr 'then' 1 'else' 0);
+
+  ci :=   qi 'div' (qi + qi) 'div' qi  ;
+  di := ((qi 'div' (qi + qi)) 'div' qi);
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  ci :=   qi * (qi - qi) * qi  ;
+  di := ((qi * (qi - qi)) * qi);
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  cr :=   qr / (qr - qr) / qr  ;
+  dr := ((qr / (qr - qr)) / qr);
+  errors := errors + ('if' cr != dr 'then' 1 'else' 0);
+
+  ci :=   qi 'div' (qi + qi) 'div' qi  ;
+  di := ((qi 'div' (qi + qi)) 'div' qi);
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+
+  cb :=   qb && (qi < qi) && qb  ;
+  db := ((qb && (qi < qi)) && qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qb && (qi <= qi) && qb  ;
+  db := ((qb && (qi <= qi)) && qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qb && (qi = qi) && qb  ;
+  db := ((qb && (qi = qi)) && qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qb && (qi >= qi) && qb  ;
+  db := ((qb && (qi >= qi)) && qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qb && (qi > qi) && qb  ;
+  db := ((qb && (qi > qi)) && qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qb && (qi != qi) && qb  ;
+  db := ((qb && (qi != qi)) && qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qb || (qi < qi) || qb  ;
+  db := ((qb || (qi < qi)) || qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qb || (qi <= qi) || qb  ;
+  db := ((qb || (qi <= qi)) || qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qb || (qi = qi) || qb  ;
+  db := ((qb || (qi = qi)) || qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qb || (qi >= qi) || qb  ;
+  db := ((qb || (qi >= qi)) || qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qb || (qi > qi) || qb  ;
+  db := ((qb || (qi > qi)) || qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+  cb :=   qb || (qi != qi) || qb  ;
+  db := ((qb || (qi != qi)) || qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+
+  cb :=  !(qb && !qb);
+  db := (!(qb && (!qb)));
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+
+  cb :=   qb && (qb || qb) && qb  ;
+  db := ((qb && (qb || qb)) && qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+
+  cb :=   qb || (qb => qb) || qb  ;
+  db := ((qb || (qb => qb)) || qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+
+  cb :=   qb => (qb == qb) => qb  ;
+  db := ((qb => (qb == qb)) => qb);
+  errors := errors + ('if' ((cb && db) || !(cb || db)) 'then' 0 'else' 1);
+
+
+  ci := ((((((((((((((qi ** ((((((((((((((qi * qi)))))))))))))) ** qi))))))))))))));
+  di := ((qi ** (qi * qi)) ** qi);
+  errors := errors + ('if' ci != di 'then' 1 'else' 0);
+
+  exit ('if' errors > 100 'then' 100 'else' errors);
+
+ 'end';

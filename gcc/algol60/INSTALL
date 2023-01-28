@@ -1,0 +1,84 @@
+Build Instructions
+==================
+
+Required source packages
+------------------------
+
+    * The core package of a recent 4.2.x or development release.
+    * The GCC Algol 60 package from the main page.
+
+Required software
+-----------------
+
+    * The usual GCC requirements
+      (http://gcc.gnu.org/install/prerequisites.html)
+    * An existing C compiler (even if you use make bootstrap).  gcc
+      3.x and newer will probably work.
+    * Recent flex (2.5.3x should work)
+
+Directories
+-----------
+
+    * <srcdir> -- Location of the GCC sources
+    * <builddir> -- Build directory for GCC
+    * <prefix> -- Install directory for GCC
+
+Building the Compiler and Runtime Library
+-----------------------------------------
+
+   1. Unpack the GCC archive.  This creates <srcdir>.
+
+   2. Change to the <srcdir> directory.
+
+   3. Unpack the gcc-algol60 archive.  This will create a subdirectory
+      named "./gcc/algol60" and "./libga60", and also will populate
+      other gcc directories, such as "./gcc/testsuite" with Algol 60
+      files.
+
+   4. Patch toplevel "configure" and "Makefile.def".  While in
+      <srcdir>, type the following:
+      	patch -p1 < gcc-4.2.0-toplevel.patch
+      The patch-file "gcc-4.2.0-toplevel.patch" is delivered by the
+      gcc-algol60 archive.
+
+   5. Build GCC using the normal install instructions.  The only
+      difference is that "algol60" is added to the --enable-languages
+      option.  Remember to always use "gmake" if GNU Make is not the
+      system's default.
+
+   6. Check whole suite with "make check", or just run Algol 60
+      specific tests using "make -C gcc check-algol60"
+
+   7. Install with "make install".
+
+
+Building a Cross Compiler
+-------------------------
+
+GCC Algol 60 was not tested as cross compiler yet.
+
+Runtime Library Notes
+---------------------
+
+This release brings Algol 60 runtime library with Algol 60 compiler.
+Only the following functions are implemented as part of runtime
+library:
+
+  'procedure' exit ('integer' exit_status);
+  'integer' 'procedure' puts ('string' str);
+  'integer' 'procedure' abs ('integer' value);
+  'real' 'procedure' abs ('real' value);
+  'integer' 'procedure' entier ('real' value);
+  'real' 'procedure' entier ('integer' value);
+  'integer' 'procedure' sign ('integer' value);
+  'integer' 'procedure' sign ('real' value);
+
+Furthermore, power operator '**' is implemented as a call to the
+runtime library.
+
+Some of the runtime library functions may further require other
+libraries.  E.g. libga60's 'puts' is implemented as a wrapper around
+glibc's 'puts', and power operator support functions use functions
+from libm.  Necessary libraries are linked in automatically, so no
+care has to be taken on part of the developer; but one or more of
+libga60, libc, and libm may have to be available at binary run site.

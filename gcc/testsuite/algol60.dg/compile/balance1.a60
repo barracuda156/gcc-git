@@ -1,0 +1,1 @@
+'begin' 'comment' { dg-do compile } ; 'end';

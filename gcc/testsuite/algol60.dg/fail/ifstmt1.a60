@@ -1,0 +1,7 @@
+'comment' { dg-do compile } ;
+'begin'
+  'integer' a;
+  'Boolean' b, c;
+  'comment' { dg-error "type mismatch" } ; 'if' a 'then'
+    a := 4;
+'end';

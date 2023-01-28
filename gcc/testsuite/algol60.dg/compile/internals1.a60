@@ -1,0 +1,6 @@
+'begin' 'comment' { dg-do compile } ;
+ 'integer' a;
+ 'real' b;
+ a := abs (4);
+ b := abs (4.4);
+'end';

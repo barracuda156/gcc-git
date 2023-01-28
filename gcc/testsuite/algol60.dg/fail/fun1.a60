@@ -1,0 +1,28 @@
+'comment' { dg-do compile } ;
+'begin'
+	'procedure' foo1;
+	'value' a; 'comment' { dg-error "formal parameter" } ;
+	'integer' a; 'comment' { dg-error "formal parameter" } ;
+	'begin'
+	'end';
+
+	'procedure' foo2 (a, b, c); 'comment' { dg-error "type specifier" } ;
+	'value' a, c;
+	'integer' a, b;
+	'begin'
+	'end';
+
+	'procedure' foo4 (a, b, c);
+	'value' a, b, a; 'comment' { dg-error "duplicate" } ;
+	'integer' a, b;
+	'begin'
+	'end';
+
+	'procedure' foo5 (a, b, c);
+	'value' a, b;
+	'integer' b;
+	'real' b, c;    'comment' { dg-error "duplicate" } ;
+	'integer' b, a; 'comment' { dg-error "duplicate" } ;
+	'begin'
+	'end';
+'end';
