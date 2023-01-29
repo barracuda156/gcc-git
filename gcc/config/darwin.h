@@ -369,7 +369,7 @@ extern GTY(()) int darwin_ms_struct;
       %{%:sanitize(address): -lasan } \
       %{%:sanitize(undefined): -lubsan } \
       %(link_ssp) \
-      %:version-compare(>< 10.6 10.7 mmacosx-version-min= -ld10-uwfef) \
+      %:version-compare(>< 10.6.1 10.7 mmacosx-version-min= -ld10-uwfef) \
       %(link_gcc_c_sequence) \
       %{!nodefaultexport:%{dylib|dynamiclib|bundle: \
 	%:version-compare(>= 10.11 asm_macosx_version_min= -U) \
@@ -500,14 +500,14 @@ extern GTY(()) int darwin_ms_struct;
 #undef REAL_LIBGCC_SPEC
 #define REAL_LIBGCC_SPEC \
 "%{static-libgcc|static:						  \
-    %:version-compare(!> 10.6 mmacosx-version-min= -lgcc_eh)		  \
-    %:version-compare(>= 10.6 mmacosx-version-min= -lemutls_w);		  \
+    %:version-compare(!> 10.7 mmacosx-version-min= -lgcc_eh)		  \
+    %:version-compare(>= 10.7 mmacosx-version-min= -lemutls_w);		  \
    shared-libgcc|fexceptions|fobjc-exceptions|fgnu-runtime:		  \
     %:version-compare(!> 10.11 mmacosx-version-min= -lgcc_s.1.1)	  \
     %:version-compare(>= 10.11 mmacosx-version-min= -lemutls_w)		  \
     %:version-compare(!> 10.3.9 mmacosx-version-min= -lgcc_eh)		  \
     %:version-compare(>< 10.3.9 10.5 mmacosx-version-min= -lgcc_s.10.4)   \
-    %:version-compare(>< 10.5 10.6 mmacosx-version-min= -lgcc_s.10.5);	  \
+    %:version-compare(>< 10.5 10.7 mmacosx-version-min= -lgcc_s.10.5);	  \
    : -lemutls_w								  \
   } -lgcc "
 
