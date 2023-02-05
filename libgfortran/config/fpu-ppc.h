@@ -1,5 +1,6 @@
 /* FPU-related code for PowerPC.
-   Copyright (C) 2020-2023 Free Software Foundation, Inc.
+   Copyright (C) 2023 Free Software Foundation, Inc.
+   Contributed by Sergey Fedorov <vital.had@gmail.com>
 
 This file is part of the GNU Fortran runtime library (libgfortran).
 
@@ -22,35 +23,7 @@ a copy of the GCC Runtime Library Exception along with this program;
 see the files COPYING3 and COPYING.RUNTIME respectively. If not, see
 <http://www.gnu.org/licenses/>. */
 
-#ifdef HAVE_FENV_H
-  #include <fenv.h>
-#else
-  /* These are defined in ppc/fenv.h */
-  typedef unsigned int    fenv_t;
-  typedef unsigned int    fexcept_t;
-
-  /* FP exception flags */
-  #define FE_INEXACT      0x02000000
-  #define FE_DIVBYZERO    0x04000000
-  #define FE_UNDERFLOW    0x08000000
-  #define FE_OVERFLOW     0x10000000
-  #define FE_INVALID      0x20000000
-  #define FE_ALL_EXCEPT   0x3E000000
-
-  /* Definitions of rounding direction macros */
-  /* 0b00 Round to nearest
-     0b01 Round toward zero
-     0b10 Round toward +infinity
-     0b11 Round toward –infinity */
-  #define FE_TONEAREST    0x00000000
-  #define FE_TOWARDZERO   0x00000001
-  #define FE_UPWARD       0x00000002
-  #define FE_DOWNWARD     0x00000003
-
-  /* Default FP environment */
-  extern const fenv_t _FE_DFL_ENV;
-  #define FE_DFL_ENV &_FE_DFL_ENV   /* Pointer to default environment */
-#endif
+#include <fenv.h>
 
 /* FP exception flags */
 #define FE_INVALID_SNAN 0x01000000
@@ -80,11 +53,6 @@ see the files COPYING3 and COPYING.RUNTIME respectively. If not, see
 #define FE_SET_FX       0x80000000
 #define FE_CLR_FX       0x7FFFFFFF
 
-/* No prototypes of these in fenv.h */
-extern int fegetexcept(void);
-extern int feenableexcept(int);
-extern int fedisableexcept(int);
-
 /* Check we can actually store the FPU state in the allocated size. */
 _Static_assert (sizeof(fenv_t) <= (size_t) GFC_FPE_STATE_BUFFER_SIZE,
    "GFC_FPE_STATE_BUFFER_SIZE is too small");
@@ -100,7 +68,7 @@ typedef union {
 #define HEXDOUBLE(hi, lo) {{ hi, lo }}
 
 
-int fegetexcept(void)
+static inline int fegetexcept(void)
 {
 	hexdouble fe;
 
@@ -145,13 +113,13 @@ int feholdexcept(fenv_t *envp)
 	hexdouble fe;
 
 	fe.d = __builtin_mffs();
-	*envp = fe.d;
+	*envp = fe.i.lo;
 	fe.i.lo &= ~(FE_ALL_EXCEPT | EXCEPT_MASK);
 	__builtin_mtfsf(0xFF, fe.d);
 	return 0;
 }
 
-int feenableexcept(int mask)
+static inline int feenableexcept(int mask)
 {
 	hexdouble fe;
 	fenv_t oldmask;
@@ -163,7 +131,7 @@ int feenableexcept(int mask)
 	return ((oldmask & EXCEPT_MASK) << FE_EXCEPT_SHIFT);
 }
 
-int fedisableexcept(int mask)
+static inline int fedisableexcept(int mask)
 {
 	hexdouble fe;
 	fenv_t oldmask;
