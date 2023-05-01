@@ -521,3 +521,69 @@ do {									\
 /* Use standard DWARF numbering for DWARF debugging information.  */
 #define RS6000_USE_DWARF_NUMBERING
 
+
+/* The following are fallbacks for pre-release 10.6 for PPC (10A190).
+   This is a work-in-progress.  */
+
+#include <libkern/version.h>
+#if version_stage == 0x20
+
+/* Below -ld10-uwfef is removed.  */
+#undef LINK_COMMAND_SPEC_A
+#define LINK_COMMAND_SPEC_A \
+   "%{!c:%{!E:%{!S:%{!M:%{!MM:%{!fsyntax-only:%{!fdump=*: \
+    %(linker)" \
+    LINK_PLUGIN_SPEC \
+    "%{flto*:%<fcompare-debug*} \
+     %{flto} %{fno-lto} %{flto=*} \
+    %l " LINK_COMPRESS_DEBUG_SPEC \
+   "%X %{s} %{t} %{Z} %{u*} \
+    %{e*} %{r} \
+    %{o*}%{!o:-o a.out} \
+    %{!r:%{!nostdlib:%{!nostartfiles:%S}}} \
+    %{L*} %(link_libgcc) %o \
+    %{!r:%{!nostdlib:%{!nodefaultlibs:\
+      %{fprofile-arcs|fprofile-generate*|coverage:-lgcov} \
+      %{fopenacc|fopenmp|%:gt(%{ftree-parallelize-loops=*:%*} 1): \
+	%{static|static-libgcc|static-libstdc++|static-libgfortran: \
+	  libgomp.a%s; : -lgomp }} \
+      %{fgnu-tm: \
+	%{static|static-libgcc|static-libstdc++|static-libgfortran: \
+	  libitm.a%s; : -litm }} \
+      %{%:sanitize(address): -lasan } \
+      %{%:sanitize(undefined): -lubsan } \
+      %(link_ssp) \
+      %(link_gcc_c_sequence) \
+      %{!nodefaultexport:%{dylib|dynamiclib|bundle: \
+	%:version-compare(>= 10.11 asm_macosx_version_min= -U) \
+	%:version-compare(>= 10.11 asm_macosx_version_min= ___emutls_get_address) \
+	%:version-compare(>= 10.11 asm_macosx_version_min= -exported_symbol) \
+	%:version-compare(>= 10.11 asm_macosx_version_min= ___emutls_get_address) \
+	%:version-compare(>= 10.11 asm_macosx_version_min= -U) \
+	%:version-compare(>= 10.11 asm_macosx_version_min= ___emutls_register_common) \
+	%:version-compare(>= 10.11 asm_macosx_version_min= -exported_symbol) \
+	%:version-compare(>= 10.11 asm_macosx_version_min= ___emutls_register_common) \
+      }} \
+    }}}\
+    %{!r:%{!nostdlib:%{!nostartfiles:%E}}} %{T*} %{F*} "\
+    DARWIN_PIE_SPEC \
+    DARWIN_NOPIE_SPEC \
+    DARWIN_RDYNAMIC \
+    DARWIN_NOCOMPACT_UNWIND \
+    "}}}}}}} %<pie %<no-pie %<rdynamic %<X %<rpath "
+
+#undef REAL_LIBGCC_SPEC
+#define REAL_LIBGCC_SPEC \
+"%{static-libgcc|static:						  \
+    %:version-compare(!> 10.7 mmacosx-version-min= -lgcc_eh)		  \
+    %:version-compare(>= 10.7 mmacosx-version-min= -lemutls_w);		  \
+   shared-libgcc|fexceptions|fobjc-exceptions|fgnu-runtime:		  \
+    %:version-compare(!> 10.11 mmacosx-version-min= -lgcc_s.1.1)	  \
+    %:version-compare(>= 10.11 mmacosx-version-min= -lemutls_w)		  \
+    %:version-compare(!> 10.3.9 mmacosx-version-min= -lgcc_eh)		  \
+    %:version-compare(>< 10.3.9 10.5 mmacosx-version-min= -lgcc_s.10.4)   \
+    %:version-compare(>< 10.5 10.7 mmacosx-version-min= -lgcc_s.10.5);	  \
+   : -lemutls_w								  \
+  } -lgcc "
+
+#endif
