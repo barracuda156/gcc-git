@@ -32,26 +32,30 @@ see the files COPYING3 and COPYING.RUNTIME respectively. If not, see
 #define FE_INVALID_ZDZ  0x00200000
 #define FE_INVALID_IMZ  0x00100000
 #define FE_INVALID_XVC  0x00080000
-#define FE_INVALID_SOFT 0x00000400
-#define	FE_INVALID_SQRT 0x00000200  /* May not be supported. */
+#define FE_INVALID_SOFT 0x00000400  /* May not be supported. */
+#define FE_INVALID_SQRT 0x00000200  /* May not be supported. */
 #define FE_INVALID_CVI  0x00000100
 #define FE_NO_EXCEPT    0xC1FFFFFF
-/* It appears that values in fenv_private.h are wrong, since they omit VX_SOFT,
-   but include VX_SQRT, which seems not to be supported: compare with fp_regs.h. */
-#define FE_ALL_INVALID  0x01F80500
-#define FE_NO_INVALID   0xFE07FAFF
-#define FE_ALL_FLAGS    0xFFF80500
-#define FE_NO_FLAGS     0x0007FAFF
+/* Values in fenv_private.h and fp_regs.h are inconsistent: the former omits VX_SOFT,
+   but includes VX_SQRT, it is reverse in fp_regs.h. It is unclear which is correct,
+   if any. Here we assume both to be supported. FreeBSD also adds FE_INVALID in, which is
+   arguably wrong. Notice, that implementation of feraiseexcept uses FE_INVALID_SOFT. */
+#define FE_ALL_INVALID  0x01F80700
+#define FE_NO_INVALID   0xFE07F8FF
+#define FE_ALL_FLAGS    0xFFF80700
+#define FE_NO_FLAGS     0x0007F8FF
 #define FE_NO_ENABLES   0xFFFFFF07
 
 #define FE_ALL_RND      0x00000003
 #define FE_NO_RND       0xFFFFFFFC
 
-#define FE_EXCEPT_SHIFT	22
+#define FE_EXCEPT_SHIFT 22
 #define EXCEPT_MASK     FE_ALL_EXCEPT >> FE_EXCEPT_SHIFT
 /* Floating-point exception summary (FX) bit. */
 #define FE_SET_FX       0x80000000
 #define FE_CLR_FX       0x7FFFFFFF
+/* Libm defined SET_INVALID to 0x01000000 instead. */
+#define SET_INVALID     FE_INVALID_SOFT
 
 /* Check we can actually store the FPU state in the allocated size. */
 _Static_assert (sizeof(fenv_t) <= (size_t) GFC_FPE_STATE_BUFFER_SIZE,
@@ -70,155 +74,167 @@ typedef union {
 
 static inline int fegetexcept(void)
 {
-	hexdouble fe;
+    hexdouble fe;
 
-	fe.d = __builtin_mffs();
-	return ((fe.i.lo & EXCEPT_MASK) << FE_EXCEPT_SHIFT);
+    fe.d = __builtin_mffs();
+    return ((fe.i.lo & EXCEPT_MASK) << FE_EXCEPT_SHIFT);
 }
 
 int feclearexcept(int excepts)
 {
-	hexdouble fe;
+    hexdouble fe;
 
-	if (excepts & FE_INVALID)
-		excepts |= FE_ALL_INVALID;
-	fe.d = __builtin_mffs();
-	fe.i.lo &= ~excepts;
-	__builtin_mtfsf(0xFF, fe.d);
-	return 0;
+    if (excepts & FE_INVALID)
+        excepts |= FE_ALL_INVALID;
+    fe.d = __builtin_mffs();
+    fe.i.lo &= ~excepts;
+    if ((fe.i.lo & FE_ALL_EXCEPT) == 0)
+        fe.i.lo &= FE_CLR_FX;
+    __builtin_mtfsf(0xFF, fe.d);
+    return 0;
 }
 
+/* It is not possible to set VX bit directly. */
 int feraiseexcept(int excepts)
 {
-	hexdouble fe;
+    hexdouble fe;
 
-	if (excepts & FE_INVALID)
-		excepts |= FE_INVALID_SOFT;
-	fe.d = __builtin_mffs();
-	fe.i.lo |= excepts;
-	__builtin_mtfsf(0xFF, fe.d);
-	return 0;
+    if (excepts & FE_INVALID)
+        excepts |= SET_INVALID;
+    fe.d = __builtin_mffs();
+    fe.i.lo |= excepts;
+    __builtin_mtfsf(0xFF, fe.d);
+    return 0;
 }
 
 int fetestexcept(int excepts)
 {
-	hexdouble fe;
+    hexdouble fe;
 
-	fe.d = __builtin_mffs();
-	return (fe.i.lo & excepts);
+    fe.d = __builtin_mffs();
+    return (fe.i.lo & excepts);
 }
 
 int feholdexcept(fenv_t *envp)
 {
-	hexdouble fe;
+    hexdouble fe;
 
-	fe.d = __builtin_mffs();
-	*envp = fe.i.lo;
-	fe.i.lo &= ~(FE_ALL_EXCEPT | EXCEPT_MASK);
-	__builtin_mtfsf(0xFF, fe.d);
-	return 0;
+    fe.d = __builtin_mffs();
+    *envp = fe.i.lo;
+    fe.i.lo &= (FE_NO_FLAGS & FE_NO_ENABLES);
+    __builtin_mtfsf(0xFF, fe.d);
+    return 0;
 }
 
 static inline int feenableexcept(int mask)
 {
-	hexdouble fe;
-	fenv_t oldmask;
+    hexdouble fe;
+    fenv_t oldmask;
 
-	fe.d = __builtin_mffs();
-	oldmask = fe.i.lo;
-	fe.i.lo |= (mask & FE_ALL_EXCEPT) >> FE_EXCEPT_SHIFT;
-	__builtin_mtfsf(0xFF, fe.d);
-	return ((oldmask & EXCEPT_MASK) << FE_EXCEPT_SHIFT);
+    fe.d = __builtin_mffs();
+    oldmask = fe.i.lo;
+    fe.i.lo |= (mask & FE_ALL_EXCEPT) >> FE_EXCEPT_SHIFT;
+    __builtin_mtfsf(0xFF, fe.d);
+    return ((oldmask & EXCEPT_MASK) << FE_EXCEPT_SHIFT);
 }
 
 static inline int fedisableexcept(int mask)
 {
-	hexdouble fe;
-	fenv_t oldmask;
+    hexdouble fe;
+    fenv_t oldmask;
 
-	fe.d = __builtin_mffs();
-	oldmask = fe.i.lo;
-	fe.i.lo &= ~((mask & FE_ALL_EXCEPT) >> FE_EXCEPT_SHIFT);
-	__builtin_mtfsf(0xFF, fe.d);
-	return ((oldmask & EXCEPT_MASK) << FE_EXCEPT_SHIFT);
+    fe.d = __builtin_mffs();
+    oldmask = fe.i.lo;
+    fe.i.lo &= ~((mask & FE_ALL_EXCEPT) >> FE_EXCEPT_SHIFT);
+    __builtin_mtfsf(0xFF, fe.d);
+    return ((oldmask & EXCEPT_MASK) << FE_EXCEPT_SHIFT);
 }
 
 int fegetexceptflag(fexcept_t *flagp, int excepts)
 {
-	hexdouble fe;
+    hexdouble fe;
+    fenv_t excstate;
 
-	fe.d = __builtin_mffs();
-	*flagp = fe.i.lo & excepts;
-	return 0;
+    fe.d = __builtin_mffs();
+    excstate = fe.i.lo & FE_ALL_FLAGS;
+    excepts &= excstate;
+    if ((excepts & FE_INVALID) == 0)
+        excstate &= FE_NO_INVALID;
+    *flagp = excstate & (excepts | FE_NO_EXCEPT);
+    return 0;
 }
 
 int fesetexceptflag(const fexcept_t *flagp, int excepts)
 {
-	hexdouble fe;
+    hexdouble fe;
 
-	if (excepts & FE_INVALID)
-		excepts |= FE_ALL_EXCEPT;
-	fe.d = __builtin_mffs();
-	fe.i.lo &= ~excepts;
-	fe.i.lo |= *flagp & excepts;
-	__builtin_mtfsf(0xFF, fe.d);
-	return 0;
+    fe.d = __builtin_mffs();
+    if (excepts & FE_INVALID)
+        fe.i.lo = (fe.i.lo & FE_NO_INVALID) | (*flagp & FE_ALL_INVALID);
+    fe.i.lo = (fe.i.lo & (~excepts)) | (*flagp & excepts);
+    if (fe.i.lo & FE_ALL_EXCEPT)
+        fe.i.lo |= FE_SET_FX;
+    else
+        fe.i.lo &= FE_CLR_FX;
+    __builtin_mtfsf(0xFF, fe.d);
+    return 0;
 }
 
 int fegetround(void)
 {
-	hexdouble fe;
+    hexdouble fe;
 
-	fe.d = __builtin_mffs();
-	return (fe.i.lo & FE_ALL_RND);
+    fe.d = __builtin_mffs();
+    return (fe.i.lo & FE_ALL_RND);
 }
 
 int fesetround(int round)
 {
-	hexdouble fe;
+    hexdouble fe;
 
-	if (round & FE_NO_RND)
-		return (-1);
-	fe.d = __builtin_mffs();
-	fe.i.lo &= FE_NO_RND;
-	fe.i.lo |= round;
-	__builtin_mtfsf(0xFF, fe.d);
-	return 0;
+    if (round & FE_NO_RND)
+        return (-1);
+    else {
+        fe.d = __builtin_mffs();
+        fe.i.lo = (fe.i.lo & FE_NO_RND) | round;
+        __builtin_mtfsf(0xFF, fe.d);
+        return 0;
+    }
 }
 
 int fegetenv(fenv_t *envp)
 {
-	hexdouble fe;
+    hexdouble fe;
 
-	fe.d = __builtin_mffs();
-	*envp = fe.i.lo;
-	return 0;
+    fe.d = __builtin_mffs();
+    *envp = fe.i.lo;
+    return 0;
 }
 
 int fesetenv(const fenv_t *envp)
 {
-	hexdouble fe;
+    hexdouble fe;
 
-	fe.i.lo = *envp;
-	__builtin_mtfsf(0xFF, fe.d);
-	return 0;
+    fe.i.lo = *envp;
+    __builtin_mtfsf(0xFF, fe.d);
+    return 0;
 }
 
 int feupdateenv(const fenv_t *envp)
 {
-	hexdouble fe;
+    hexdouble fe;
 
-	fe.d = __builtin_mffs();
-	fe.i.lo &= FE_ALL_EXCEPT;
-	fe.i.lo |= *envp;
-	__builtin_mtfsf(0xFF, fe.d);
-	return 0;
+    fe.d = __builtin_mffs();
+    fe.i.lo &= FE_ALL_EXCEPT;
+    fe.i.lo |= *envp;
+    __builtin_mtfsf(0xFF, fe.d);
+    return 0;
 }
 
 
 int get_fpu_trap_exceptions (void)
 {
-  int exceptions = fegetexcept ();
+  int exceptions = fegetexcept();
   int res = 0;
 
   if (exceptions & FE_INVALID) res |= GFC_FPE_INVALID;
@@ -234,7 +250,7 @@ void set_fpu (void)
 {
   if (options.fpe & GFC_FPE_DENORMAL)
     estr_write ("Fortran runtime warning: Floating point 'denormal operand' "
-	        "exception not supported.\n");
+            "exception not supported.\n");
 
   set_fpu_trap_exceptions (options.fpe, 0);
 }
@@ -341,7 +357,7 @@ void set_fpu_state (void *state)
 int get_fpu_rounding_mode (void)
 {
   int rnd_mode;
-  rnd_mode = fegetround ();
+  rnd_mode = fegetround();
 
   switch (rnd_mode)
     {
