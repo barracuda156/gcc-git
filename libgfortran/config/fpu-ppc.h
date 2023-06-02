@@ -40,10 +40,10 @@ see the files COPYING3 and COPYING.RUNTIME respectively. If not, see
    but includes VX_SQRT, it is reverse in fp_regs.h. It is unclear which is correct,
    if any. Here we assume both to be supported. FreeBSD also adds FE_INVALID in, which is
    arguably wrong. Notice, that implementation of feraiseexcept uses FE_INVALID_SOFT. */
-#define FE_ALL_INVALID  0x01F80700
-#define FE_NO_INVALID   0xFE07F8FF
-#define FE_ALL_FLAGS    0xFFF80700
-#define FE_NO_FLAGS     0x0007F8FF
+#define FE_ALL_INVALID  0x01F80300
+#define FE_NO_INVALID   0xFE07FCFF
+#define FE_ALL_FLAGS    0xFFF80300
+#define FE_NO_FLAGS     0x0007FCFF
 #define FE_NO_ENABLES   0xFFFFFF07
 
 #define FE_ALL_RND      0x00000003
@@ -54,8 +54,9 @@ see the files COPYING3 and COPYING.RUNTIME respectively. If not, see
 /* Floating-point exception summary (FX) bit. */
 #define FE_SET_FX       0x80000000
 #define FE_CLR_FX       0x7FFFFFFF
-/* Libm defined SET_INVALID to 0x01000000 instead. */
-#define SET_INVALID     FE_INVALID_SOFT
+/* From libm it appears that FE_INVALID_SOFT is unsupported.
+   Glibc also uses FE_INVALID_SNAN for that case. */
+#define SET_INVALID     0x01000000
 
 /* Check we can actually store the FPU state in the allocated size. */
 _Static_assert (sizeof(fenv_t) <= (size_t) GFC_FPE_STATE_BUFFER_SIZE,
