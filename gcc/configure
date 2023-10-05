@@ -13046,6 +13046,16 @@ $as_echo "#define HAS_MCONTEXT_T_UNDERSCORES /**/" >>confdefs.h
     ;;
 esac
 
+case ${build} in
+  *-*-darwin*)
+    case `uname -r` in
+      10.0.0d[012])
+$as_echo "#define HAVE_BETA_SNOW_LEOPARD 1" >>confdefs.h
+      ;;
+    esac
+    ;;
+esac
+
 # ---------
 # Threading
 # ---------

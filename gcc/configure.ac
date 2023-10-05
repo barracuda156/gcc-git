@@ -2041,6 +2041,16 @@ int main() { mcontext_t m; if (m->ss.srr0) return 0; return 0; }
     ;;
 esac
 
+case ${build} in
+  *-*-darwin*)
+    case `uname -r` in
+      10.0.0d[012])
+        AC_DEFINE(HAVE_BETA_SNOW_LEOPARD, 1, [Define if it runs on pre-release version of 10.6.])
+      ;;
+    esac
+    ;;
+esac
+
 # ---------
 # Threading
 # ---------

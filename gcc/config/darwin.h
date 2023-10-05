@@ -513,6 +513,22 @@ extern GTY(()) int darwin_ms_struct;
      * from 10.6 onwards, from libSystem.dylib
 */
 #undef REAL_LIBGCC_SPEC
+#if HAVE_BETA_SNOW_LEOPARD
+/* These are special settings for pre-release versions of Snow Leopard,
+    including 10.6 PowerPC.
+*/
+#define REAL_LIBGCC_SPEC \
+"%{static-libgcc|static:						  \
+    %:version-compare(!> 10.7 mmacosx-version-min= -lgcc_eh)		  \
+    %:version-compare(>= 10.7 mmacosx-version-min= -lemutls_w);		  \
+   shared-libgcc|fexceptions|fobjc-exceptions|fgnu-runtime:		  \
+   " DARWIN_SHARED_LIBGCC "						  \
+    %:version-compare(!> 10.3.9 mmacosx-version-min= -lgcc_eh)		  \
+    %:version-compare(>< 10.3.9 10.5 mmacosx-version-min= -lgcc_s.10.4)   \
+    %:version-compare(>< 10.5 10.7 mmacosx-version-min= -lgcc_s.10.5);	  \
+   : -lemutls_w								  \
+  } -lgcc "
+#else
 #define REAL_LIBGCC_SPEC \
 "%{static-libgcc|static:						  \
     %:version-compare(!> 10.6 mmacosx-version-min= -lgcc_eh)		  \
@@ -525,6 +541,7 @@ extern GTY(()) int darwin_ms_struct;
     %:version-compare(>< 10.5 10.6 mmacosx-version-min= -lgcc_s.10.5);	  \
    : -lemutls_w								  \
   } -lgcc "
+#endif
 
 /* We specify crt0.o as -lcrt0.o so that ld will search the library path.  */
 
