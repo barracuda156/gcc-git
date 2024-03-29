@@ -416,7 +416,6 @@ extern GTY(()) int darwin_ms_struct;
       %{%:sanitize(address): -lasan } \
       %{%:sanitize(undefined): -lubsan } \
       %(link_ssp) \
-      %:version-compare(>< 10.6 10.7 mmacosx-version-min= -ld10-uwfef) \
       %(link_gcc_c_sequence) \
       %{!nodefaultexport: \
 	%{%:version-compare(>= 10.11 asm_macosx_version_min= -U): \
@@ -548,17 +547,17 @@ extern GTY(()) int darwin_ms_struct;
 #undef REAL_LIBGCC_SPEC
 #define REAL_LIBGCC_SPEC \
 "%{static-libgcc|static:						  \
-    %:version-compare(!> 10.6 mmacosx-version-min= -lgcc_eh);		  \
+    %:version-compare(!> 10.7 mmacosx-version-min= -lgcc_eh);		  \
    shared-libgcc|fexceptions|fobjc-exceptions|fgnu-runtime:		  \
    " DARWIN_SHARED_LIBGCC "						  \
     %:version-compare(!> 10.3.9 mmacosx-version-min= -lgcc_eh)		  \
     %:version-compare(>< 10.3.9 10.5 mmacosx-version-min= -lgcc_s.10.4)   \
-    %:version-compare(>< 10.5 10.6 mmacosx-version-min= -lgcc_s.10.5)	  \
+    %:version-compare(>< 10.5 10.7 mmacosx-version-min= -lgcc_s.10.5)	  \
   } -lgcc "
 
 #define DARWIN_WEAK_CRTS \
 "%{static-libgcc|static:						  \
-    %{%:version-compare(>= 10.6 mmacosx-version-min= -lemutls_w):	  \
+    %{%:version-compare(>= 10.7 mmacosx-version-min= -lemutls_w):	  \
       " DARWIN_HEAP_T_LIB "} ;						  \
    : -lemutls_w	" DARWIN_HEAP_T_LIB "					  \
   }"
@@ -596,8 +595,8 @@ extern GTY(()) int darwin_ms_struct;
 
 #define DARWIN_CRT1_SPEC						\
   "%:version-compare(!> 10.5 mmacosx-version-min= -lcrt1.o)		\
-   %:version-compare(>< 10.5 10.6 mmacosx-version-min= -lcrt1.10.5.o)	\
-   %:version-compare(>< 10.6 10.8 mmacosx-version-min= -lcrt1.10.6.o)	\
+   %:version-compare(>< 10.5 10.7 mmacosx-version-min= -lcrt1.10.5.o)	\
+   %:version-compare(>< 10.7 10.8 mmacosx-version-min= -lcrt1.10.6.o)	\
    %{fgnu-tm: -lcrttms.o}"
 
 #define DARWIN_CRT2_SPEC ""
@@ -612,10 +611,10 @@ extern GTY(()) int darwin_ms_struct;
 
 #define DARWIN_DYLIB1_SPEC						\
   "%:version-compare(!> 10.5 mmacosx-version-min= -ldylib1.o)		\
-   %:version-compare(>< 10.5 10.6 mmacosx-version-min= -ldylib1.10.5.o)"
+   %:version-compare(>< 10.5 10.7 mmacosx-version-min= -ldylib1.10.5.o)"
 
 #define DARWIN_BUNDLE1_SPEC \
-"%{!static:%:version-compare(< 10.6 mmacosx-version-min= -lbundle1.o)	\
+"%{!static:%:version-compare(< 10.7 mmacosx-version-min= -lbundle1.o)	\
 	   %{fgnu-tm: -lcrttms.o}}"
 
 #if DARWIN_AT_RPATH
