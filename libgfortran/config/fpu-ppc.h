@@ -55,12 +55,30 @@ see the files COPYING3 and COPYING.RUNTIME respectively. If not, see
 #define FE_SET_FX       0x80000000
 #define FE_CLR_FX       0x7FFFFFFF
 /* From libm it appears that FE_INVALID_SOFT is unsupported.
-   Glibc also uses FE_INVALID_SNAN for that case. */
+    Glibc also uses FE_INVALID_SNAN for that case. */
 #define SET_INVALID     0x01000000
 
 /* Check we can actually store the FPU state in the allocated size. */
 _Static_assert (sizeof(fenv_t) <= (size_t) GFC_FPE_STATE_BUFFER_SIZE,
-   "GFC_FPE_STATE_BUFFER_SIZE is too small");
+    "GFC_FPE_STATE_BUFFER_SIZE is too small");
+
+/*  Macros to get or set environment flags doubleword  */
+#define      FEGETENVD(x) ({ __label__ L1, L2; L1: (void)&&L1; \
+                    asm volatile ("mffs %0" : "=f" (x)); \
+                    L2: (void)&&L2; })
+
+#define      FESETENVD(x) ({ __label__ L1, L2; L1: (void)&&L1; \
+                    asm volatile("mtfsf 255,%0" : : "f" (x)); \
+                    L2: (void)&&L2; })
+
+/*  Macros to get or set environment flags doubleword in their own dispatch group  */
+#define      FEGETENVD_GRP(x) ({ __label__ L1, L2; L1: (void)&&L1; \
+                    asm volatile ("mffs %0" : "=f" (x)); \
+                    L2: (void)&&L2; __NOOP; __NOOP; __NOOP; })
+
+#define      FESETENVD_GRP(x) ({ __label__ L1, L2; __NOOP; __NOOP; __NOOP; L1: (void)&&L1; \
+                    asm volatile ("mtfsf 255,%0" : : "f" (x)); \
+                    L2: (void)&&L2;})
 
 typedef union {
     struct {
@@ -73,162 +91,149 @@ typedef union {
 #define HEXDOUBLE(hi, lo) {{ hi, lo }}
 
 
-static inline int fegetexcept(void)
+void fegetexcept (fexcept_t *flagp, int excepts)
 {
-    hexdouble fe;
-
-    fe.d = __builtin_mffs();
-    return ((fe.i.lo & EXCEPT_MASK) << FE_EXCEPT_SHIFT);
+    _fegetexceptflag (flagp, excepts);
 }
 
-int feclearexcept(int excepts)
+int feclearexcept (int excepts)
 {
-    hexdouble fe;
+    hexdouble ifpscr;
+    uint32_t mask;
 
-    if (excepts & FE_INVALID)
-        excepts |= FE_ALL_INVALID;
-    fe.d = __builtin_mffs();
-    fe.i.lo &= ~excepts;
-    if ((fe.i.lo & FE_ALL_EXCEPT) == 0)
-        fe.i.lo &= FE_CLR_FX;
-    __builtin_mtfsf(0xFF, fe.d);
+    mask = excepts & FE_ALL_EXCEPT; 
+    if ((excepts & FE_INVALID) != 0 ) mask |= FE_ALL_INVALID;
+    FEGETENVD_GRP(ifpscr.d);
+    mask = ~mask;
+    //if ((excepts & FE_INVALID) != 0) mask &= FE_NO_INVALID;
+    ifpscr.i.lo &= mask;
+    if ((ifpscr.i.lo & FE_ALL_EXCEPT) == 0)
+        ifpscr.i.lo &= FE_CLR_FX;
+    FESETENVD_GRP(ifpscr.d);
     return 0;
 }
 
-/* It is not possible to set VX bit directly. */
-int feraiseexcept(int excepts)
+int feraiseexcept (int excepts)
 {
-    hexdouble fe;
+    uint32_t mask;
+    hexdouble ifpscr;
 
-    if (excepts & FE_INVALID)
-        excepts |= SET_INVALID;
-    fe.d = __builtin_mffs();
-    fe.i.lo |= excepts;
-    __builtin_mtfsf(0xFF, fe.d);
+    mask = excepts & FE_ALL_EXCEPT;
+
+    FEGETENVD_GRP(ifpscr.d);
+
+    if ((mask & FE_INVALID) != 0)
+    {
+        ifpscr.i.lo |= SET_INVALID;
+        mask &= ~FE_INVALID;
+    }
+
+    if ((mask & (FE_OVERFLOW | FE_UNDERFLOW | FE_DIVBYZERO | FE_INEXACT)) != 0)
+        ifpscr.i.lo |= mask;
+
+    FESETENVD_GRP(ifpscr.d);
     return 0;
 }
 
-int fetestexcept(int excepts)
+int fetestexcept (int excepts)
 {
-    hexdouble fe;
+    hexdouble temp;
 
-    fe.d = __builtin_mffs();
-    return (fe.i.lo & excepts);
+    FEGETENVD_GRP(temp.d);
+    return (int) ((excepts & FE_ALL_EXCEPT) & temp.i.lo);
 }
 
-int feholdexcept(fenv_t *envp)
+int feholdexcept (fenv_t *envp)
 {
-    hexdouble fe;
+    hexdouble ifpscr;
 
-    fe.d = __builtin_mffs();
-    *envp = fe.i.lo;
-    fe.i.lo &= (FE_NO_FLAGS & FE_NO_ENABLES);
-    __builtin_mtfsf(0xFF, fe.d);
+    FEGETENVD_GRP(ifpscr.d);
+    *envp = ifpscr.i.lo;
+    ifpscr.i.lo &= (FE_NO_FLAGS & FE_NO_ENABLES);
+    FESETENVD_GRP(ifpscr.d);
     return 0;
 }
 
 static inline int feenableexcept(int mask)
 {
-    hexdouble fe;
+    hexdouble ifpscr;
     fenv_t oldmask;
 
-    fe.d = __builtin_mffs();
-    oldmask = fe.i.lo;
-    fe.i.lo |= (mask & FE_ALL_EXCEPT) >> FE_EXCEPT_SHIFT;
-    __builtin_mtfsf(0xFF, fe.d);
+    FEGETENVD_GRP(ifpscr.d);
+    oldmask = ifpscr.i.lo;
+    ifpscr.i.lo |= (mask & FE_ALL_EXCEPT) >> FE_EXCEPT_SHIFT;
+    FESETENVD_GRP(ifpscr.d);
     return ((oldmask & EXCEPT_MASK) << FE_EXCEPT_SHIFT);
 }
 
 static inline int fedisableexcept(int mask)
 {
-    hexdouble fe;
+    hexdouble ifpscr;
     fenv_t oldmask;
 
-    fe.d = __builtin_mffs();
-    oldmask = fe.i.lo;
-    fe.i.lo &= ~((mask & FE_ALL_EXCEPT) >> FE_EXCEPT_SHIFT);
-    __builtin_mtfsf(0xFF, fe.d);
+    FEGETENVD_GRP(ifpscr.d);
+    oldmask = ifpscr.i.lo;
+    ifpscr.i.lo &= ~((mask & FE_ALL_EXCEPT) >> FE_EXCEPT_SHIFT);
+    FESETENVD_GRP(ifpscr.d);
     return ((oldmask & EXCEPT_MASK) << FE_EXCEPT_SHIFT);
 }
 
-int fegetexceptflag(fexcept_t *flagp, int excepts)
+void fesetexcept (fexcept_t *flagp, int excepts)
 {
-    hexdouble fe;
-    fenv_t excstate;
-
-    fe.d = __builtin_mffs();
-    excstate = fe.i.lo & FE_ALL_FLAGS;
-    excepts &= excstate;
-    if ((excepts & FE_INVALID) == 0)
-        excstate &= FE_NO_INVALID;
-    *flagp = excstate & (excepts | FE_NO_EXCEPT);
-    return 0;
+    _fesetexceptflag (flagp, excepts);
 }
 
-int fesetexceptflag(const fexcept_t *flagp, int excepts)
+int fegetround (void)
 {
-    hexdouble fe;
+    hexdouble temp;
 
-    fe.d = __builtin_mffs();
-    if (excepts & FE_INVALID)
-        fe.i.lo = (fe.i.lo & FE_NO_INVALID) | (*flagp & FE_ALL_INVALID);
-    fe.i.lo = (fe.i.lo & (~excepts)) | (*flagp & excepts);
-    if (fe.i.lo & FE_ALL_EXCEPT)
-        fe.i.lo |= FE_SET_FX;
+    FEGETENVD_GRP(temp.d);
+    return (int) (temp.i.lo & FE_ALL_RND);
+}
+
+int fesetround (int round)
+{   
+    if ((round & FE_NO_RND))
+        return 1;
     else
-        fe.i.lo &= FE_CLR_FX;
-    __builtin_mtfsf(0xFF, fe.d);
-    return 0;
-}
+    {
+        hexdouble temp;
 
-int fegetround(void)
-{
-    hexdouble fe;
-
-    fe.d = __builtin_mffs();
-    return (fe.i.lo & FE_ALL_RND);
-}
-
-int fesetround(int round)
-{
-    hexdouble fe;
-
-    if (round & FE_NO_RND)
-        return (-1);
-    else {
-        fe.d = __builtin_mffs();
-        fe.i.lo = (fe.i.lo & FE_NO_RND) | round;
-        __builtin_mtfsf(0xFF, fe.d);
+        FEGETENVD_GRP(temp.d);
+        temp.i.lo = (temp.i.lo & FE_NO_RND) | round;
+        FESETENVD_GRP(temp.d);
         return 0;
     }
 }
 
-int fegetenv(fenv_t *envp)
+int fegetenv (fenv_t *envp)
 {
-    hexdouble fe;
+    hexdouble temp;
 
-    fe.d = __builtin_mffs();
-    *envp = fe.i.lo;
+    FEGETENVD_GRP(temp.d);
+    *envp = temp.i.lo;
     return 0;
 }
 
-int fesetenv(const fenv_t *envp)
+int fesetenv (const fenv_t *envp)
 {
-    hexdouble fe;
+    hexdouble temp;
 
-    fe.i.lo = *envp;
-    __builtin_mtfsf(0xFF, fe.d);
+    temp.i.lo = *envp;
+    FESETENVD_GRP(temp.d);
     return 0;
 }
 
-int feupdateenv(const fenv_t *envp)
+int feupdateenv (const fenv_t *envp)
 {
-    hexdouble fe;
+    int newexc;
+    hexdouble temp;
 
-    fe.d = __builtin_mffs();
-    fe.i.lo &= FE_ALL_EXCEPT;
-    fe.i.lo |= *envp;
-    __builtin_mtfsf(0xFF, fe.d);
+    FEGETENVD_GRP(temp.d);
+    newexc = temp.i.lo & FE_ALL_EXCEPT;
+    temp.i.lo = *envp;
+    FESETENVD_GRP(temp.d);
+    feraiseexcept(newexc);
     return 0;
 }
 
